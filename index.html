@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expired Games</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="." aria-label="Expired Games home"><span class="brand-mark">eg</span><span>expired games</span></a>
+      <div class="header-status"><span class="status-dot"></span> archive node 04 <span class="slash">/</span> live</div>
+    </header>
+
+    <section class="intro">
+      <div class="intro-copy">
+        <p class="eyebrow">the doodle vault / 2010—2024</p>
+        <h1>Save what<br><em>time forgot.</em></h1>
+        <p class="lede">The archive is expiring. Rescue lost classics, then challenge the bots that live inside the vault.</p>
+      </div>
+      <div class="sticker" aria-hidden="true"><span>404</span><small>NOT FOUND<br>BUT FUN</small></div>
+    </section>
+
+    <nav class="game-nav" aria-label="Choose a game">
+      <button class="mode-button active" type="button" data-mode="archive"><span>01</span> archive rescue</button>
+      <button class="mode-button" type="button" data-mode="tictactoe"><span>02</span> tic-tac-toe</button>
+      <button class="mode-button" type="button" data-mode="mines"><span>03</span> mines</button>
+      <button class="mode-button" type="button" data-mode="chess"><span>04</span> chess vs bot</button>
+      <button class="mode-button" type="button" data-mode="snake"><span>05</span> snake</button>
+      <button class="mode-button" type="button" data-mode="memory"><span>06</span> memory match</button>
+      <button class="mode-button" type="button" data-mode="pong"><span>07</span> pong</button>
+      <button class="mode-button" type="button" data-mode="2048"><span>08</span> 2048</button>
+      <button class="mode-button" type="button" data-mode="breakout"><span>09</span> breakout</button>
+      <button class="mode-button" type="button" data-mode="flappy"><span>10</span> flappy</button>
+      <button class="mode-button" type="button" data-mode="connect"><span>11</span> connect four</button>
+    </nav>
+
+    <section class="game-layout" aria-label="Expired Games arcade">
+      <aside class="sidebar">
+        <div class="score-block">
+          <span class="label">archive score</span>
+          <strong id="score">000000</strong>
+          <div class="high-score">BEST <span id="bestScore">000000</span></div>
+        </div>
+        <div class="side-rule"></div>
+        <div class="stat-row"><span>time left</span><strong id="time">45.0</strong></div>
+        <div class="stat-row"><span>lives</span><strong id="lives">● ● ●</strong></div>
+        <div class="stat-row"><span>saved</span><strong id="saved">00</strong></div>
+        <button id="startButton" class="start-button" type="button"><span>▶</span> start archive</button>
+        <label class="difficulty-control" for="difficultySelect">bot difficulty<select id="difficultySelect"><option value="easy">easy</option><option value="medium" selected>medium</option><option value="hard">hard</option></select></label>
+        <p class="tip"><span class="tip-key">TIP</span> Keep your cursor moving. The oldest games decay first.</p>
+      </aside>
+
+      <div class="board-wrap mode-panel active" data-panel="archive">
+        <div class="board-meta"><span id="roundLabel">READY TO RESTORE</span><span>click / tap to save</span></div>
+        <div id="gameBoard" class="game-board" aria-label="Game board"></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> recoverable</span><span><i class="legend-dot red"></i> corrupted</span><span id="message">Press start when you are ready.</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="tictactoe">
+        <div class="board-meta"><span>TIC-TAC-TOE / BOT ONLINE</span><span id="tttStatus">your move / X</span></div>
+        <div class="ttt-layout"><div id="tttBoard" class="ttt-board" aria-label="Tic-tac-toe board"></div><div class="game-info"><div class="bot-face">◉<small>BOT_02</small></div><p id="tttMessage">Place an X. The bot is watching.</p><button id="tttReset" class="mini-button" type="button">new round</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> you / X</span><span><i class="legend-dot red"></i> bot / O</span><span>three in a row wins</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="mines">
+        <div class="board-meta"><span>MINES / 10 HAZARDS</span><span id="minesStatus">left click reveal / right click flag</span></div>
+        <div class="mines-layout"><div id="minesBoard" class="mines-board" aria-label="Mines board"></div><div class="game-info mines-info"><div class="mine-count"><strong id="mineCount">10</strong><small>MINES LEFT</small></div><p id="minesMessage">Clear the field without waking the archive.</p><button id="minesReset" class="mini-button" type="button">new field</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> clear</span><span><i class="legend-dot red"></i> mine</span><span>right click to mark</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="chess">
+        <div class="board-meta"><span>CHESS / ARCHIVE BOT</span><span id="chessStatus">your move / white</span></div>
+        <div class="chess-layout"><div id="chessBoard" class="chess-board" aria-label="Chess board"></div><div class="game-info"><div class="bot-face chess-face">♛<small>BOT_07</small></div><p id="chessMessage">Select a white piece, then a highlighted square.</p><button id="chessReset" class="mini-button" type="button">new match</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> white / you</span><span><i class="legend-dot red"></i> black / bot</span><span>capture the bot king</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="snake">
+        <div class="board-meta"><span>SNAKE / DGL_2004</span><span id="snakeStatus">arrow keys / WASD</span></div>
+        <div class="snake-layout"><div id="snakeBoard" class="snake-board" aria-label="Snake game board"></div><div class="game-info"><div class="bot-face snake-face">↝<small>SNAKE_01</small></div><p id="snakeMessage">Press start, then steer with arrow keys or WASD.</p><button id="snakeReset" class="mini-button" type="button">start snake</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> player</span><span><i class="legend-dot red"></i> food</span><span>wrap forever / beat your score</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="memory">
+        <div class="board-meta"><span>MEMORY / LOST PAIRS</span><span id="memoryStatus">find the matching pairs</span></div>
+        <div class="memory-layout"><div id="memoryBoard" class="memory-board" aria-label="Memory match board"></div><div class="game-info"><div class="bot-face memory-face">✦<small>PAIR_06</small></div><p id="memoryMessage">Flip two cards and restore the pairs.</p><button id="memoryReset" class="mini-button" type="button">new deck</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> matched</span><span><i class="legend-dot red"></i> hidden</span><span>six pairs in the vault</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="pong">
+        <div class="board-meta"><span>PONG / BOT ARENA</span><span id="pongStatus">first to 5</span></div>
+        <div class="pong-layout"><canvas id="pongCanvas" class="pong-canvas" width="720" height="420" aria-label="Pong game"></canvas><div class="game-info"><div class="bot-face pong-face">▌▐<small>BOT_08</small></div><p id="pongMessage">Move with W/S or the arrow keys.</p><button id="pongReset" class="mini-button" type="button">start pong</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> player</span><span><i class="legend-dot red"></i> bot</span><span>first to five wins</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="2048">
+        <div class="board-meta"><span>2048 / NUMBER VAULT</span><span id="twentyStatus">arrow keys / WASD</span></div>
+        <div class="twenty-layout"><div id="twentyBoard" class="twenty-board" aria-label="2048 game board"></div><div class="game-info"><div class="bot-face twenty-face">2048<small>GRID_08</small></div><p id="twentyMessage">Combine matching numbers to reach 2048.</p><strong class="twenty-score" id="twentyScore">000000</strong><button id="twentyReset" class="mini-button" type="button">new grid</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> combine</span><span><i class="legend-dot red"></i> 2048</span><span>use arrow keys or WASD</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="breakout">
+        <div class="board-meta"><span>BREAKOUT / DGL_1976</span><span id="breakoutStatus">move with arrows / A D</span></div>
+        <div class="arcade-layout"><canvas id="breakoutCanvas" class="arcade-canvas" width="720" height="440" aria-label="Breakout game"></canvas><div class="game-info"><div class="bot-face breakout-face">▦<small>BRICK_09</small></div><p id="breakoutMessage">Break every brick. The archive has three lives.</p><button id="breakoutReset" class="mini-button" type="button">start breakout</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> paddle</span><span><i class="legend-dot red"></i> bricks</span><span>clear the wall</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="flappy">
+        <div class="board-meta"><span>FLAPPY / DGL_2013</span><span id="flappyStatus">space / click to flap</span></div>
+        <div class="arcade-layout"><canvas id="flappyCanvas" class="arcade-canvas" width="720" height="440" aria-label="Flappy game"></canvas><div class="game-info"><div class="bot-face flappy-face">⌁<small>BIRD_10</small></div><p id="flappyMessage">Thread the gaps and beat your high score.</p><button id="flappyReset" class="mini-button" type="button">start flappy</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> bird</span><span><i class="legend-dot red"></i> pipes</span><span>space / tap to flap</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="connect">
+        <div class="board-meta"><span>CONNECT FOUR / BOT ONLINE</span><span id="connectStatus">your move / blue</span></div>
+        <div class="connect-layout"><div id="connectBoard" class="connect-board" aria-label="Connect Four board"></div><div class="game-info"><div class="bot-face connect-face">●○<small>BOT_11</small></div><p id="connectMessage">Drop four blue discs in a row.</p><button id="connectReset" class="mini-button" type="button">new match</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> you</span><span><i class="legend-dot red"></i> bot</span><span>four in a row wins</span></div>
+      </div>
+    </section>
+
+    <footer class="footer"><span>EXP. 2024 // THE INTERNET NEVER FORGETS</span><span>v.1.0.4</span></footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
