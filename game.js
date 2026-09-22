@@ -7,10 +7,6 @@ const livesElement = document.querySelector('#lives');
 const savedElement = document.querySelector('#saved');
 const messageElement = document.querySelector('#message');
 const roundLabel = document.querySelector('#roundLabel');
-const difficultySelect = document.querySelector('#difficultySelect');
-let botDifficulty = difficultySelect.value;
-difficultySelect.addEventListener('change', () => { botDifficulty = difficultySelect.value; });
-
 const games = [
   ['SNAKE', '↝', '2004'], ['PAC-MAP', '●', '2010'], ['PONY', '♞', '2014'], ['SPACE', '✦', '2012'],
   ['MINE', '◆', '2015'], ['BASKET', '◒', '2012'], ['GARDEN', '✿', '2011'], ['CUBE', '▦', '2018'],
@@ -137,6 +133,8 @@ modeButtons.forEach(button => button.addEventListener('click', () => {
   if (mode === 'breakout' && !breakoutReady) resetBreakout();
   if (mode === 'flappy' && !flappyReady) resetFlappy();
   if (mode === 'connect' && !connectState.length) resetConnect();
+  if (mode === 'agar' && !agarReady) resetAgar();
+  if (mode === 'slither' && !slitherReady) resetSlither();
 }));
 
 const tttBoardElement = document.querySelector('#tttBoard');
@@ -333,40 +331,29 @@ document.querySelector('#chessReset').addEventListener('click', resetChess);
 const snakeBoardElement = document.querySelector('#snakeBoard');
 const snakeMessage = document.querySelector('#snakeMessage');
 const snakeStatus = document.querySelector('#snakeStatus');
+const snakeModeSelect = document.querySelector('#snakeModeSelect');
 let snakeState = [];
-let snakeFood = 0;
+let snakeFood = [];
 let snakeDirection = { row: 0, column: 1 };
 let snakeNextDirection = { row: 0, column: 1 };
 let snakeTimer;
+let snakeClock;
 let snakeRunning = false;
-
-function resetSnake() {
-  clearInterval(snakeTimer);
-  snakeState = [135, 134, 133]; snakeFood = 170; snakeDirection = { row: 0, column: 1 }; snakeNextDirection = { row: 0, column: 1 }; snakeRunning = false;
-  snakeStatus.textContent = 'arrow keys / WASD'; snakeMessage.textContent = 'Press start, then steer with arrow keys or WASD.'; document.querySelector('#snakeReset').textContent = 'start snake'; renderSnake();
-}
-
-function startSnake() {
-  if (snakeRunning) { resetSnake(); return; }
-  snakeRunning = true; snakeMessage.textContent = 'Eat the red dots. Do not hit yourself.'; document.querySelector('#snakeReset').textContent = 'restart snake'; snakeTimer = setInterval(stepSnake, 170);
-}
-
-function renderSnake() {
-  snakeBoardElement.innerHTML = '';
-  for (let index = 0; index < 256; index += 1) { const cell = document.createElement('div'); cell.className = 'snake-cell'; if (snakeState.includes(index)) cell.classList.add('snake'); if (snakeState[0] === index) cell.classList.add('snake-head'); if (snakeFood === index) cell.classList.add('food'); snakeBoardElement.appendChild(cell); }
-}
-
-function stepSnake() {
-  snakeDirection = snakeNextDirection; const head = snakeState[0]; const row = Math.floor(head / 16); const column = head % 16; const nextRow = (row + snakeDirection.row + 16) % 16; const nextColumn = (column + snakeDirection.column + 16) % 16; const next = nextRow * 16 + nextColumn;
-  if (snakeState.includes(next)) { snakeRunning = false; clearInterval(snakeTimer); snakeMessage.textContent = 'Crash. The archive wins this round.'; snakeStatus.textContent = 'game over'; return; }
-  snakeState.unshift(next); if (next === snakeFood) { do snakeFood = Math.floor(Math.random() * 256); while (snakeState.includes(snakeFood)); snakeMessage.textContent = `Infinite run: ${snakeState.length - 3} dots restored.`; } else snakeState.pop(); renderSnake();
-}
-
-document.addEventListener('keydown', event => {
-  const directions = { ArrowUp: { row: -1, column: 0 }, w: { row: -1, column: 0 }, ArrowDown: { row: 1, column: 0 }, s: { row: 1, column: 0 }, ArrowLeft: { row: 0, column: -1 }, a: { row: 0, column: -1 }, ArrowRight: { row: 0, column: 1 }, d: { row: 0, column: 1 } };
-  const next = directions[event.key]; if (!next || !snakeRunning || !document.querySelector('[data-panel="snake"]').classList.contains('active')) return; if (next.row === -snakeDirection.row && next.column === -snakeDirection.column) return; snakeNextDirection = next; event.preventDefault();
-});
-
+let snakeMode = 'classic';
+let snakeTicks = 0;
+let snakeObstacles = [];
+const snakeRows = 16;
+const snakeColumns = 20;
+const snakeModes = { classic: { label: 'classic walls', speed: 150, wrap: false }, wrap: { label: 'wraparound', speed: 150, wrap: true }, speed: { label: 'speed rush', speed: 82, wrap: false }, time: { label: 'time attack', speed: 120, wrap: false, time: 30 }, maze: { label: 'maze runner', speed: 145, wrap: false, maze: true }, portal: { label: 'portal gates', speed: 145, wrap: false, portal: true }, double: { label: 'double food', speed: 145, wrap: false, food: 2 }, tail: { label: 'tail chase', speed: 120, wrap: false, growth: 2 }, borderless: { label: 'borderless', speed: 130, wrap: true, noSelf: true }, zen: { label: 'zen endless', speed: 180, wrap: true, noSelf: true, noGrowth: true } };
+function snakeRandomOpen() { const open = []; for (let index = 0; index < snakeRows * snakeColumns; index += 1) if (!snakeState.includes(index) && !snakeObstacles.includes(index) && !snakeFood.includes(index)) open.push(index); return open[Math.floor(Math.random() * open.length)] ?? 0; }
+function resetSnake() { clearInterval(snakeTimer); clearInterval(snakeClock); snakeMode = snakeModeSelect.value; const config = snakeModes[snakeMode]; snakeState = [Math.floor(snakeRows / 2) * snakeColumns + 4, Math.floor(snakeRows / 2) * snakeColumns + 3, Math.floor(snakeRows / 2) * snakeColumns + 2]; snakeFood = []; snakeDirection = { row: 0, column: 1 }; snakeNextDirection = { row: 0, column: 1 }; snakeRunning = false; snakeTicks = 0; snakeObstacles = config.maze ? createSnakeMaze() : config.portal ? [0, 319] : []; for (let index = 0; index < (config.food || 1); index += 1) snakeFood.push(snakeRandomOpen()); snakeBoardElement.dataset.mode = snakeMode; snakeStatus.textContent = config.time ? `${config.label} / 30s` : config.label; snakeMessage.textContent = `Choose ${config.label}, then steer with arrow keys or WASD.`; document.querySelector('#snakeReset').textContent = 'start snake'; renderSnake(); }
+function createSnakeMaze() { const blocks = []; for (let row = 2; row < snakeRows - 2; row += 3) for (let column = 2; column < snakeColumns - 2; column += 3) { if (Math.random() > .35) for (let width = 0; width < 3; width += 1) blocks.push(row * snakeColumns + column + width); } return blocks; }
+function startSnake() { if (snakeRunning) { resetSnake(); return; } snakeRunning = true; const config = snakeModes[snakeMode]; snakeMessage.textContent = config.maze ? 'Follow the open lanes. The border is real.' : 'Eat the red dots and watch the border.'; document.querySelector('#snakeReset').textContent = 'restart snake'; snakeTimer = setInterval(stepSnake, config.speed); if (config.time) { let timeLeft = config.time; snakeClock = setInterval(() => { timeLeft -= 1; snakeStatus.textContent = `${config.label} / ${timeLeft}s`; if (timeLeft <= 0) endSnake('Time attack complete.'); }, 1000); } }
+function endSnake(message) { snakeRunning = false; clearInterval(snakeTimer); clearInterval(snakeClock); snakeStatus.textContent = 'game over'; snakeMessage.textContent = message; document.querySelector('#snakeReset').textContent = 'try again'; }
+function renderSnake() { snakeBoardElement.innerHTML = ''; for (let index = 0; index < snakeRows * snakeColumns; index += 1) { const cell = document.createElement('div'); cell.className = 'snake-cell'; if (snakeState.includes(index)) cell.classList.add('snake'); if (snakeState[0] === index) cell.classList.add('snake-head'); if (snakeFood.includes(index)) cell.classList.add('food'); if (snakeObstacles.includes(index) && snakeMode !== 'portal') cell.classList.add('obstacle'); if (snakeMode === 'portal' && snakeObstacles.includes(index)) cell.classList.add('portal'); snakeBoardElement.appendChild(cell); } }
+function stepSnake() { if (!snakeRunning) return; const config = snakeModes[snakeMode]; snakeDirection = snakeNextDirection; const head = snakeState[0]; const row = Math.floor(head / snakeColumns); const column = head % snakeColumns; let nextRow = row + snakeDirection.row; let nextColumn = column + snakeDirection.column; if (config.wrap) { nextRow = (nextRow + snakeRows) % snakeRows; nextColumn = (nextColumn + snakeColumns) % snakeColumns; } const next = nextRow * snakeColumns + nextColumn; if (snakeMode === 'portal' && next === 0) { snakeState.unshift(319); } else if (snakeMode === 'portal' && next === 319) { snakeState.unshift(0); } else { const outside = nextRow < 0 || nextRow >= snakeRows || nextColumn < 0 || nextColumn >= snakeColumns; if (outside || snakeObstacles.includes(next) || (!config.noSelf && snakeState.includes(next))) { endSnake(config.wrap ? 'You hit an obstacle.' : 'The border got you. Try again.'); return; } snakeState.unshift(next); } const foodIndex = snakeFood.indexOf(snakeState[0]); if (foodIndex >= 0) { snakeFood.splice(foodIndex, 1); if (!config.noGrowth) for (let growth = 0; growth < (config.growth || 1); growth += 1) snakeState.push(snakeState[snakeState.length - 1]); snakeFood.push(snakeRandomOpen()); if (config.food === 2 && snakeFood.length < 2) snakeFood.push(snakeRandomOpen()); snakeMessage.textContent = `${config.label}: ${snakeState.length - 3} segments restored.`; } else if (!config.noGrowth || snakeState.length < 180) snakeState.pop(); snakeTicks += 1; if (snakeMode === 'speed' && snakeTicks % 25 === 0) { clearInterval(snakeTimer); snakeTimer = setInterval(stepSnake, Math.max(48, config.speed - snakeTicks)); } renderSnake(); }
+snakeModeSelect.addEventListener('change', resetSnake);
+document.addEventListener('keydown', event => { const directions = { ArrowUp: { row: -1, column: 0 }, w: { row: -1, column: 0 }, ArrowDown: { row: 1, column: 0 }, s: { row: 1, column: 0 }, ArrowLeft: { row: 0, column: -1 }, a: { row: 0, column: -1 }, ArrowRight: { row: 0, column: 1 }, d: { row: 0, column: 1 } }; const next = directions[event.key]; if (!next || !snakeRunning || !document.querySelector('[data-panel="snake"]').classList.contains('active')) return; if (next.row === -snakeDirection.row && next.column === -snakeDirection.column) return; snakeNextDirection = next; event.preventDefault(); });
 document.querySelector('#snakeReset').addEventListener('click', startSnake);
 
 const memoryBoardElement = document.querySelector('#memoryBoard');
@@ -478,6 +465,62 @@ function finishConnect(color) { if (connectWinner(color)) { connectOver = true; 
 function playConnect(column) { if (connectOver || dropConnect(column, 'blue') < 0) return; renderConnect(); if (finishConnect('blue')) { renderConnect(); return; } connectStatus.textContent = 'bot thinking / red'; setTimeout(() => { if (connectOver) return; const openColumns = [...Array(7).keys()].filter(item => connectState[item] === ''); const choice = botDifficulty === 'easy' ? openColumns[Math.floor(Math.random() * openColumns.length)] : openColumns.reduce((best, item) => connectState[5 * 7 + item] ? best : item, openColumns[0]); dropConnect(choice, 'red'); finishConnect('red'); if (!connectOver) { connectStatus.textContent = 'your move / blue'; connectMessage.textContent = 'Your turn. Build a line.'; } renderConnect(); }, 320); }
 document.querySelector('#connectReset').addEventListener('click', resetConnect);
 
+const agarCanvas = document.querySelector('#agarCanvas');
+const agarContext = agarCanvas.getContext('2d');
+const agarMessage = document.querySelector('#agarMessage');
+const agarStatus = document.querySelector('#agarStatus');
+let agarReady = false;
+let agarRunning = false;
+let agarFrame;
+let agarPointer = { x: 360, y: 220 };
+let agarGame;
+
+function randomAgarColor() { return ['#f05d54', '#f8cc50', '#b6e6d2', '#ff9d71', '#b78cff'][Math.floor(Math.random() * 5)]; }
+function resetAgar() {
+  cancelAnimationFrame(agarFrame); agarReady = true; agarRunning = false;
+  agarGame = { worldWidth: 2400, worldHeight: 1600, player: [{ x: 1200, y: 800, radius: 22, color: '#2d6cff' }], pellets: [], bots: [], score: 0, camera: { x: 1200, y: 800 } };
+  for (let index = 0; index < 260; index += 1) agarGame.pellets.push({ x: 25 + Math.random() * 2350, y: 25 + Math.random() * 1550, radius: 3 + Math.random() * 3, color: randomAgarColor() });
+  for (let index = 0; index < 12; index += 1) agarGame.bots.push({ x: 80 + Math.random() * 2240, y: 60 + Math.random() * 1480, radius: 16 + Math.random() * 32, color: randomAgarColor(), angle: Math.random() * Math.PI * 2, speed: 0.65 + Math.random() * .75, think: 0 });
+  agarPointer = { x: 360, y: 220 }; agarStatus.textContent = 'mouse / touch to move / space to split'; agarMessage.textContent = 'Explore the huge map, collect pellets, split, and absorb smaller cells.'; document.querySelector('#agarReset').textContent = 'start arena'; drawAgar();
+}
+function startAgar() { if (agarRunning) { resetAgar(); return; } agarRunning = true; document.querySelector('#agarReset').textContent = 'restart arena'; agarMessage.textContent = 'Find smaller cells and keep moving.'; agarFrame = requestAnimationFrame(stepAgar); }
+function setAgarPointer(event) { const rect = agarCanvas.getBoundingClientRect(); const point = event.touches ? event.touches[0] : event; agarPointer.x = (point.clientX - rect.left) * agarCanvas.width / rect.width; agarPointer.y = (point.clientY - rect.top) * agarCanvas.height / rect.height; if (!agarRunning) startAgar(); }
+function agarDistance(first, second) { return Math.hypot(first.x - second.x, first.y - second.y); }
+function drawAgar() { const g = agarGame; const focus = g.player[0]; g.camera.x += (focus.x - g.camera.x) * .08; g.camera.y += (focus.y - g.camera.y) * .08; const left = g.camera.x - 360; const top = g.camera.y - 220; agarContext.fillStyle = '#102f45'; agarContext.fillRect(0, 0, 720, 440); agarContext.strokeStyle = 'rgba(182,230,210,.1)'; for (let x = Math.floor(left / 80) * 80; x < left + 720; x += 80) { agarContext.beginPath(); agarContext.moveTo(x - left, 0); agarContext.lineTo(x - left, 440); agarContext.stroke(); } for (let y = Math.floor(top / 80) * 80; y < top + 440; y += 80) { agarContext.beginPath(); agarContext.moveTo(0, y - top); agarContext.lineTo(720, y - top); agarContext.stroke(); } g.pellets.forEach(pellet => { agarContext.fillStyle = pellet.color; agarContext.beginPath(); agarContext.arc(pellet.x - left, pellet.y - top, pellet.radius, 0, Math.PI * 2); agarContext.fill(); }); g.bots.forEach(bot => drawAgarCell(bot, left, top)); g.player.forEach(cell => drawAgarCell(cell, left, top)); agarContext.fillStyle = '#f4f0e7'; agarContext.font = '500 12px DM Mono'; agarContext.fillText(`MASS ${Math.round(g.player.reduce((total, cell) => total + cell.radius, 0))}   SCORE ${g.score}   MAP 2400×1600`, 16, 24); }
+function drawAgarCell(cell, left = 0, top = 0) { agarContext.fillStyle = cell.color; agarContext.beginPath(); agarContext.arc(cell.x - left, cell.y - top, cell.radius, 0, Math.PI * 2); agarContext.fill(); agarContext.strokeStyle = 'rgba(244,240,231,.7)'; agarContext.lineWidth = 2; agarContext.stroke(); }
+function endAgar(message) { agarRunning = false; cancelAnimationFrame(agarFrame); agarStatus.textContent = 'session ended'; agarMessage.textContent = message; document.querySelector('#agarReset').textContent = 'new arena'; }
+function stepAgar() { if (!agarRunning) return; const g = agarGame; const targetX = g.camera.x - 360 + agarPointer.x; const targetY = g.camera.y - 220 + agarPointer.y; g.player.forEach(cell => { const dx = targetX - cell.x; const dy = targetY - cell.y; const distance = Math.hypot(dx, dy); const speed = Math.max(.65, 4.8 - cell.radius * .035); if (distance > 2) { cell.x += dx / distance * speed; cell.y += dy / distance * speed; } cell.x = Math.max(cell.radius, Math.min(g.worldWidth - cell.radius, cell.x)); cell.y = Math.max(cell.radius, Math.min(g.worldHeight - cell.radius, cell.y)); }); g.pellets = g.pellets.filter(pellet => { const eater = g.player.find(cell => agarDistance(cell, pellet) < cell.radius + pellet.radius); if (eater) { eater.radius += .32; g.score += 1; return false; } return true; }); while (g.pellets.length < 260) g.pellets.push({ x: 25 + Math.random() * 2350, y: 25 + Math.random() * 1550, radius: 3 + Math.random() * 3, color: randomAgarColor() }); g.bots.forEach(bot => { const allCells = [...g.player, ...g.bots.filter(other => other !== bot)]; const larger = allCells.filter(cell => cell.radius > bot.radius * 1.15).sort((a, b) => agarDistance(bot, a) - agarDistance(bot, b))[0]; const smaller = allCells.filter(cell => cell.radius < bot.radius * .82).sort((a, b) => agarDistance(bot, a) - agarDistance(bot, b))[0]; const target = larger || smaller; const direction = larger ? -1 : 1; if (target) { const angle = Math.atan2(target.y - bot.y, target.x - bot.x); bot.angle += Math.atan2(Math.sin(angle - bot.angle), Math.cos(angle - bot.angle)) * .05 * direction; } else bot.angle += (Math.random() - .5) * .08; bot.x += Math.cos(bot.angle) * bot.speed; bot.y += Math.sin(bot.angle) * bot.speed; if (bot.x < bot.radius || bot.x > g.worldWidth - bot.radius) bot.angle = Math.PI - bot.angle; if (bot.y < bot.radius || bot.y > g.worldHeight - bot.radius) bot.angle = -bot.angle; }); g.player = g.player.filter(cell => { const danger = g.bots.find(bot => agarDistance(cell, bot) < bot.radius * .72 && bot.radius > cell.radius * 1.12); if (danger) return false; const prey = g.bots.find(bot => agarDistance(cell, bot) < cell.radius * .72 && cell.radius > bot.radius * 1.12); if (prey) { cell.radius += prey.radius * .18; g.score += Math.round(prey.radius); g.bots.splice(g.bots.indexOf(prey), 1); g.bots.push({ x: 80 + Math.random() * 2240, y: 60 + Math.random() * 1480, radius: 16 + Math.random() * 32, color: randomAgarColor(), angle: Math.random() * Math.PI * 2, speed: .65 + Math.random() * .75, think: 0 }); } return true; }); if (!g.player.length) { endAgar('A larger cell absorbed you. Grow and try again.'); return; } g.bots.forEach(bot => { const prey = g.player.find(cell => agarDistance(cell, bot) < bot.radius * .72 && bot.radius > cell.radius * 1.12); if (prey) { g.player.splice(g.player.indexOf(prey), 1); bot.radius += prey.radius * .15; } }); agarStatus.textContent = `mass ${Math.round(g.player.reduce((total, cell) => total + cell.radius, 0))} / score ${g.score}`; drawAgar(); agarFrame = requestAnimationFrame(stepAgar); }
+agarCanvas.addEventListener('mousemove', setAgarPointer); agarCanvas.addEventListener('touchmove', event => { event.preventDefault(); setAgarPointer(event); }, { passive: false });
+document.addEventListener('keydown', event => { if (event.code === 'Space' && document.querySelector('[data-panel="agar"]').classList.contains('active')) { event.preventDefault(); if (!agarRunning) startAgar(); else { const g = agarGame; const largest = g.player.slice().sort((a, b) => b.radius - a.radius)[0]; if (largest && largest.radius > 12 && g.player.length < 12) { const angle = Math.atan2(agarPointer.y - 220, agarPointer.x - 360); largest.radius *= .78; g.player.push({ x: largest.x + Math.cos(angle) * largest.radius * 1.7, y: largest.y + Math.sin(angle) * largest.radius * 1.7, radius: largest.radius, color: '#2d6cff' }); agarMessage.textContent = 'Split launched. Control your new cluster.'; } } } });
+document.querySelector('#agarReset').addEventListener('click', startAgar);
+
+const slitherCanvas = document.querySelector('#slitherCanvas');
+const slitherContext = slitherCanvas.getContext('2d');
+const slitherMessage = document.querySelector('#slitherMessage');
+const slitherStatus = document.querySelector('#slitherStatus');
+let slitherReady = false;
+let slitherRunning = false;
+let slitherFrame;
+let slitherPointer = { x: 360, y: 220 };
+let slitherGame;
+
+function resetSlither() {
+  cancelAnimationFrame(slitherFrame); slitherReady = true; slitherRunning = false;
+  slitherGame = { width: 1800, height: 1200, score: 0, player: [], pellets: [], bots: [], camera: { x: 900, y: 600 } };
+  for (let index = 0; index < 180; index += 1) slitherGame.pellets.push({ x: 20 + Math.random() * 1760, y: 20 + Math.random() * 1160, color: randomAgarColor() });
+  for (let botIndex = 0; botIndex < 5; botIndex += 1) { const body = []; let x = 150 + Math.random() * 1500; let y = 100 + Math.random() * 1000; while (Math.hypot(x - 900, y - 600) < 300) { x = 150 + Math.random() * 1500; y = 100 + Math.random() * 1000; } for (let part = 0; part < 18; part += 1) body.push({ x: x - part * 12, y }); slitherGame.bots.push({ body, angle: Math.random() * Math.PI * 2, color: ['#f05d54', '#f8cc50', '#b6e6d2', '#ff9d71'][botIndex % 4] }); }
+  const playerX = 900; const playerY = 600; for (let part = 0; part < 18; part += 1) slitherGame.player.push({ x: playerX - part * 12, y: playerY }); slitherPointer = { x: 360, y: 220 }; slitherStatus.textContent = 'mouse / touch to steer'; slitherMessage.textContent = 'Collect pellets, grow your body, and circle the rival snakes.'; document.querySelector('#slitherReset').textContent = 'start slither'; drawSlither();
+}
+function startSlither() { if (slitherRunning) { resetSlither(); return; } slitherRunning = true; document.querySelector('#slitherReset').textContent = 'restart slither'; slitherMessage.textContent = 'Stay alert. Your head is vulnerable.'; slitherFrame = requestAnimationFrame(stepSlither); }
+function setSlitherPointer(event) { const rect = slitherCanvas.getBoundingClientRect(); const point = event.touches ? event.touches[0] : event; slitherPointer.x = (point.clientX - rect.left) * slitherCanvas.width / rect.width; slitherPointer.y = (point.clientY - rect.top) * slitherCanvas.height / rect.height; if (!slitherRunning) startSlither(); }
+function slitherDistance(first, second) { return Math.hypot(first.x - second.x, first.y - second.y); }
+function drawSlither() { const g = slitherGame; const head = g.player[0]; g.camera.x += (head.x - g.camera.x) * .08; g.camera.y += (head.y - g.camera.y) * .08; const left = g.camera.x - 360; const top = g.camera.y - 220; slitherContext.fillStyle = '#102f45'; slitherContext.fillRect(0, 0, 720, 440); slitherContext.strokeStyle = 'rgba(182,230,210,.11)'; for (let x = Math.floor(left / 60) * 60; x < left + 720; x += 60) { slitherContext.beginPath(); slitherContext.moveTo(x - left, 0); slitherContext.lineTo(x - left, 440); slitherContext.stroke(); } for (let y = Math.floor(top / 60) * 60; y < top + 440; y += 60) { slitherContext.beginPath(); slitherContext.moveTo(0, y - top); slitherContext.lineTo(720, y - top); slitherContext.stroke(); } g.pellets.forEach(pellet => { slitherContext.fillStyle = pellet.color; slitherContext.beginPath(); slitherContext.arc(pellet.x - left, pellet.y - top, 4, 0, Math.PI * 2); slitherContext.fill(); }); g.bots.forEach(bot => drawSlitherBody(bot.body, bot.color, left, top)); drawSlitherBody(g.player, '#2d6cff', left, top); slitherContext.fillStyle = '#f4f0e7'; slitherContext.font = '500 12px DM Mono'; slitherContext.fillText(`LENGTH ${g.player.length}   SCORE ${g.score}   MAP 1800×1200`, 16, 24); }
+function drawSlitherBody(body, color, left, top) { body.slice().reverse().forEach((part, index) => { slitherContext.fillStyle = color; slitherContext.beginPath(); slitherContext.arc(part.x - left, part.y - top, index === body.length - 1 ? 14 : 12, 0, Math.PI * 2); slitherContext.fill(); }); const head = body[0]; slitherContext.fillStyle = '#17212b'; slitherContext.beginPath(); slitherContext.arc(head.x - left - 4, head.y - top - 3, 2, 0, Math.PI * 2); slitherContext.arc(head.x - left + 4, head.y - top - 3, 2, 0, Math.PI * 2); slitherContext.fill(); }
+function endSlither(message) { slitherRunning = false; cancelAnimationFrame(slitherFrame); slitherStatus.textContent = 'game over'; slitherMessage.textContent = message; document.querySelector('#slitherReset').textContent = 'new run'; }
+function stepSlither() { if (!slitherRunning) return; const g = slitherGame; const head = g.player[0]; const targetX = g.camera.x - 360 + slitherPointer.x; const targetY = g.camera.y - 220 + slitherPointer.y; const targetAngle = Math.atan2(targetY - head.y, targetX - head.x); const currentAngle = Math.atan2(head.y - g.player[1].y, head.x - g.player[1].x); let angleDelta = Math.atan2(Math.sin(targetAngle - currentAngle), Math.cos(targetAngle - currentAngle)); const angle = currentAngle + Math.max(-.13, Math.min(.13, angleDelta)); const nextHead = { x: head.x + Math.cos(angle) * 4, y: head.y + Math.sin(angle) * 4 }; if (nextHead.x < 14 || nextHead.x > g.width - 14 || nextHead.y < 14 || nextHead.y > g.height - 14) { endSlither('You hit the edge of the world.'); return; } g.player.unshift(nextHead); const pelletIndex = g.pellets.findIndex(pellet => slitherDistance(nextHead, pellet) < 17); if (pelletIndex >= 0) { g.pellets.splice(pelletIndex, 1); g.player.push({ ...g.player[g.player.length - 1] }); g.score += 1; } else g.player.pop(); while (g.pellets.length < 180) g.pellets.push({ x: 20 + Math.random() * 1760, y: 20 + Math.random() * 1160, color: randomAgarColor() }); g.bots.forEach(bot => { const botHead = bot.body[0]; const nearby = g.pellets.reduce((best, pellet) => slitherDistance(botHead, pellet) < slitherDistance(botHead, best) ? pellet : best, g.pellets[0]); const desired = Math.atan2(nearby.y - botHead.y, nearby.x - botHead.x); bot.angle += Math.max(-.08, Math.min(.08, Math.atan2(Math.sin(desired - bot.angle), Math.cos(desired - bot.angle)))); botHead.x += Math.cos(bot.angle) * 2.2; botHead.y += Math.sin(bot.angle) * 2.2; bot.body.unshift({ x: botHead.x, y: botHead.y }); bot.body.pop(); }); const hitBody = [...g.bots.flatMap(bot => bot.body), ...g.player.slice(12)].some(part => slitherDistance(nextHead, part) < 13); if (hitBody) { endSlither('Your head hit a body. Start a new run.'); return; } if (g.bots.some(bot => bot.body.some(part => slitherDistance(nextHead, part) < 13))) { endSlither('You outmaneuvered yourself into a rival.'); return; } slitherStatus.textContent = `length ${g.player.length} / score ${g.score}`; drawSlither(); slitherFrame = requestAnimationFrame(stepSlither); }
+slitherCanvas.addEventListener('mousemove', setSlitherPointer); slitherCanvas.addEventListener('touchmove', event => { event.preventDefault(); setSlitherPointer(event); }, { passive: false });
+document.querySelector('#slitherReset').addEventListener('click', startSlither);
+
 resetTicTacToe();
 resetMines();
 resetChess();
@@ -488,3 +531,5 @@ resetTwenty();
 resetBreakout();
 resetFlappy();
 resetConnect();
+resetAgar();
+resetSlither();

@@ -38,6 +38,8 @@
       <button class="mode-button" type="button" data-mode="breakout"><span>09</span> breakout</button>
       <button class="mode-button" type="button" data-mode="flappy"><span>10</span> flappy</button>
       <button class="mode-button" type="button" data-mode="connect"><span>11</span> connect four</button>
+      <button class="mode-button" type="button" data-mode="agar"><span>12</span> agar arena</button>
+      <button class="mode-button" type="button" data-mode="slither"><span>13</span> slither arena</button>
     </nav>
 
     <section class="game-layout" aria-label="Expired Games arcade">
@@ -77,9 +79,10 @@
         <div class="board-footer"><span><i class="legend-dot blue"></i> white / you</span><span><i class="legend-dot red"></i> black / bot</span><span>capture the bot king</span></div>
       </div>
       <div class="board-wrap mode-panel" data-panel="snake">
-        <div class="board-meta"><span>SNAKE / DGL_2004</span><span id="snakeStatus">arrow keys / WASD</span></div>
-        <div class="snake-layout"><div id="snakeBoard" class="snake-board" aria-label="Snake game board"></div><div class="game-info"><div class="bot-face snake-face">↝<small>SNAKE_01</small></div><p id="snakeMessage">Press start, then steer with arrow keys or WASD.</p><button id="snakeReset" class="mini-button" type="button">start snake</button></div></div>
-        <div class="board-footer"><span><i class="legend-dot blue"></i> player</span><span><i class="legend-dot red"></i> food</span><span>wrap forever / beat your score</span></div>
+        <div class="board-meta"><span>SNAKE / GOOGLE VAULT</span><span id="snakeStatus">arrow keys / WASD</span></div>
+        <div class="snake-mode-picker"><label for="snakeModeSelect">game mode</label><select id="snakeModeSelect"><option value="classic">01 / classic walls</option><option value="wrap">02 / wraparound</option><option value="speed">03 / speed rush</option><option value="time">04 / time attack</option><option value="maze">05 / maze runner</option><option value="portal">06 / portal gates</option><option value="double">07 / double food</option><option value="tail">08 / tail chase</option><option value="borderless">09 / borderless</option><option value="zen">10 / zen endless</option></select></div>
+        <div class="snake-layout"><div id="snakeBoard" class="snake-board" aria-label="Snake game board"></div><div class="game-info"><div class="bot-face snake-face">↝<small>SNAKE_01</small></div><p id="snakeMessage">Choose a mode, then steer with arrow keys or WASD.</p><button id="snakeReset" class="mini-button" type="button">start snake</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> player</span><span><i class="legend-dot red"></i> food</span><span>10 modes / border rules change</span></div>
       </div>
       <div class="board-wrap mode-panel" data-panel="memory">
         <div class="board-meta"><span>MEMORY / LOST PAIRS</span><span id="memoryStatus">find the matching pairs</span></div>
@@ -110,6 +113,16 @@
         <div class="board-meta"><span>CONNECT FOUR / BOT ONLINE</span><span id="connectStatus">your move / blue</span></div>
         <div class="connect-layout"><div id="connectBoard" class="connect-board" aria-label="Connect Four board"></div><div class="game-info"><div class="bot-face connect-face">●○<small>BOT_11</small></div><p id="connectMessage">Drop four blue discs in a row.</p><button id="connectReset" class="mini-button" type="button">new match</button></div></div>
         <div class="board-footer"><span><i class="legend-dot blue"></i> you</span><span><i class="legend-dot red"></i> bot</span><span>four in a row wins</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="agar">
+        <div class="board-meta"><span>AGAR ARENA / NODE_12</span><span id="agarStatus">mouse / touch to move / space to split</span></div>
+        <div class="arcade-layout"><canvas id="agarCanvas" class="arcade-canvas agar-canvas" width="720" height="440" aria-label="Agar arena game"></canvas><div class="game-info"><div class="bot-face agar-face">◉<small>CELL_12</small></div><p id="agarMessage">Explore the huge map, collect pellets, split, and absorb smaller cells.</p><button id="agarReset" class="mini-button" type="button">start arena</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> your cell</span><span><i class="legend-dot red"></i> danger</span><span>huge map / split with space</span></div>
+      </div>
+      <div class="board-wrap mode-panel" data-panel="slither">
+        <div class="board-meta"><span>SLITHER ARENA / NODE_13</span><span id="slitherStatus">mouse / touch to steer</span></div>
+        <div class="arcade-layout"><canvas id="slitherCanvas" class="arcade-canvas slither-canvas" width="720" height="440" aria-label="Slither arena game"></canvas><div class="game-info"><div class="bot-face slither-face">≈<small>WORM_13</small></div><p id="slitherMessage">Collect pellets, grow your body, and circle the rival snakes.</p><button id="slitherReset" class="mini-button" type="button">start slither</button></div></div>
+        <div class="board-footer"><span><i class="legend-dot blue"></i> your snake</span><span><i class="legend-dot red"></i> enemy snakes</span><span>survive / grow / outmaneuver</span></div>
       </div>
     </section>
 
