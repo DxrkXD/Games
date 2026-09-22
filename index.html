@@ -55,6 +55,7 @@
         <div class="stat-row"><span>saved</span><strong id="saved">00</strong></div>
         <button id="startButton" class="start-button" type="button"><span>▶</span> start archive</button>
         <label class="difficulty-control" for="difficultySelect">bot difficulty<select id="difficultySelect"><option value="easy">easy</option><option value="medium" selected>medium</option><option value="hard">hard</option></select></label>
+        <div class="leaderboard"><span class="label">local leaderboard</span><div id="leaderboardList"></div></div>
         <p class="tip"><span class="tip-key">TIP</span> Keep your cursor moving. The oldest games decay first.</p>
       </aside>
 
@@ -125,6 +126,12 @@
         <div class="board-footer"><span><i class="legend-dot blue"></i> your snake</span><span><i class="legend-dot red"></i> enemy snakes</span><span>red edge = map boundary / survive and grow</span></div>
       </div>
     </section>
+
+    <div class="touch-controls" aria-label="Touch controls">
+      <button type="button" data-key="ArrowUp" aria-label="Move up">▲</button>
+      <div><button type="button" data-key="ArrowLeft" aria-label="Move left">◀</button><button type="button" data-key="ArrowDown" aria-label="Move down">▼</button><button type="button" data-key="ArrowRight" aria-label="Move right">▶</button></div>
+      <small>touch controls</small>
+    </div>
 
     <footer class="footer"><span>EXP. 2024 // THE INTERNET NEVER FORGETS</span><span>v.1.0.4</span></footer>
   </main>
